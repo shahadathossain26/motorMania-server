@@ -20,6 +20,7 @@ async function run() {
 
         const categoryCollection = client.db('motorMania').collection('category');
         const productsCollection = client.db('motorMania').collection('products');
+        const ordersCollection = client.db('motorMania').collection('orders');
 
         app.get('/categories', async (req, res) => {
             const query = {}
@@ -31,6 +32,13 @@ async function run() {
             const id = req.params.id
             const query = { category_id: id }
             const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.post('/orders', async (req, res) => {
+            const order = req.body
+            console.log(order);
+            const result = await ordersCollection.insertOne(order);
             res.send(result);
         })
     }
