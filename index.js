@@ -36,6 +36,13 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/orders', async (req, res) => {
+            const email = req.query.email
+            const query = { email: email }
+            const orders = await ordersCollection.find(query).toArray();
+            res.send(orders);
+        })
+
         app.post('/orders', async (req, res) => {
             const order = req.body
             console.log(order);
@@ -45,6 +52,11 @@ async function run() {
 
         app.post('/users', async (req, res) => {
             const user = req.body
+            const userQuery = { email: req.body.email }
+            const storedUser = await usersCollection.findOne(userQuery);
+            if (storedUser) {
+                return
+            }
             console.log(user);
             const result = await usersCollection.insertOne(user);
             res.send(result);
