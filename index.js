@@ -102,6 +102,12 @@ async function run() {
             const result = await usersCollection.find(filter).toArray();
             res.send(result);
         })
+
+        app.get('/sellers', async (req, res) => {
+            const filter = { account_type: "Seller" }
+            const result = await usersCollection.find(filter).toArray();
+            res.send(result);
+        })
     }
 
     finally {
