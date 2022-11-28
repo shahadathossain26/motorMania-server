@@ -47,6 +47,39 @@ async function run() {
             res.send(result);
         })
 
+        app.post('/products', async (req, res) => {
+            const product = req.body
+            const result = await productsCollection.insertOne(product);
+            res.send(result);
+        })
+
+        app.get('/products', async (req, res) => {
+            const name = req.query.name
+            const query = { seller_name: name }
+            const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.put('/products/advertise/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    advertise: 'true'
+                }
+            }
+            const result = await productsCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: ObjectId(id) }
+            const result = await productsCollection.deleteOne(filter);
+            res.send(result);
+        })
+
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id
             const query = { category_id: id }
