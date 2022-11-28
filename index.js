@@ -60,7 +60,15 @@ async function run() {
             res.send(result);
         })
 
-        app.put('/products/advertise/:id', async (req, res) => {
+        app.put('/products/advertise/:id', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
+            if (user?.account_type !== "Seller") {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+
+
             const id = req.params.id
             const filter = { _id: ObjectId(id) }
             const options = { upsert: true };
@@ -87,9 +95,26 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/advertisedItems', async (req, res) => {
+            const query = {
+                status: "available",
+                advertise: "true"
+            }
+            const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.get('/reportedProducts', async (req, res) => {
+            const query = {
+                report: "true"
+            }
+            const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        })
+
         app.get('/orders', verifyJWT, async (req, res) => {
             const email = req.query.email
-            const decodedEmail = req.decoded.email;
+            const decodedEmail = req.decoded.email
             if (email !== decodedEmail) {
                 return res.status(403).send({ message: 'forbidden access' })
             }
@@ -109,7 +134,14 @@ async function run() {
             const email = req.params.email
             const query = { email: email }
             const user = await usersCollection.findOne(query);
-            res.send({ isAdmin: user?.role === "admin" });
+            res.send([{ isAdmin: user?.role === "admin" }]);
+        })
+
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.account_type === "Seller" });
         })
 
         app.post('/users', async (req, res) => {
@@ -144,7 +176,13 @@ async function run() {
 
         })
 
-        app.get('/buyers', async (req, res) => {
+        app.get('/buyers', verifyJWT, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+
             const filter = { account_type: "Buyer" }
             const result = await usersCollection.find(filter).toArray();
             res.send(result);
@@ -154,6 +192,13 @@ async function run() {
             const filter = { account_type: "Seller" }
             const result = await usersCollection.find(filter).toArray();
             res.send(result);
+        })
+
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            res.send(user);
         })
 
         app.put('/users/verify/:id', verifyJWT, async (req, res) => {
@@ -173,6 +218,19 @@ async function run() {
                 }
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+
+        app.put('/products/report/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    report: 'true'
+                }
+            }
+            const result = await productsCollection.updateOne(filter, updatedDoc, options);
             res.send(result);
         })
     }
